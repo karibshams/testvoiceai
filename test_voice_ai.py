@@ -56,13 +56,12 @@ def record_audio(duration=5):
 
 def speech_to_text(audio_data):
     url = "https://api.elevenlabs.io/v1/speech-to-text"
-
     headers = {"xi-api-key": ELEVENLABS_API_KEY}
-    files = {"file": audio_data}
+    files = {"audio": ("audio.wav", audio_data, "audio/wav")}
     
     response = requests.post(url, headers=headers, files=files)
     response.raise_for_status()
-    return response.json().get("transcript", "")
+    return response.json().get("text", "")
 
 
 def generate_response(prompt, language):
