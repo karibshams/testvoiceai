@@ -55,7 +55,8 @@ def record_audio(duration=5):
 
 
 def speech_to_text(audio_data):
-    url = "https://api.elevenlabs.io/v1/scribe"
+    url = "https://api.elevenlabs.io/v1/speech-to-text"
+
     headers = {"xi-api-key": ELEVENLABS_API_KEY}
     files = {"file": audio_data}
     
