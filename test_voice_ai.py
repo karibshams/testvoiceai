@@ -1,5 +1,4 @@
 import os
-import sys
 from io import BytesIO
 import pyaudio
 import wave
@@ -7,11 +6,12 @@ import requests
 from dotenv import load_dotenv
 from openai import OpenAI
 
+# Load environment variables
 load_dotenv()
-
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 
+# Voice IDs for TTS
 VOICES = {
     "male_en": "cgSgspJ2msm3yXmAZjWA",
     "female_en": "21m00Tcm4TlvDq8ikWAM",
@@ -22,11 +22,12 @@ VOICES = {
 }
 
 LANGUAGES = ["english", "hindi", "portugese"]
-
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-
-def record_audio(duration=5):
+# -----------------------
+# RECORD AUDIO FUNCTION
+# -----------------------
+def record_audio():
     p = pyaudio.PyAudio()
     stream = p.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=1024)
     
@@ -34,8 +35,7 @@ def record_audio(duration=5):
     frames = []
     try:
         while True:
-            data = stream.read(1024)
-            frames.append(data)
+            frames.append(stream.read(1024))
     except KeyboardInterrupt:
         print("✓ Recording stopped")
     
@@ -53,16 +53,26 @@ def record_audio(duration=5):
     audio_data.seek(0)
     return audio_data
 
-
+# -----------------------
+# ELEVENLABS STT FUNCTION
+# -----------------------
 def speech_to_text(audio_data):
     audio_data.seek(0)
-    transcript = client.audio.transcriptions.create(
-        model="whisper-1",
-        file=("audio.wav", audio_data, "audio/wav")
-    )
-    return transcript.text
+    url = "https://api.elevenlabs.io/v1/speech-to-text"
+    headers = {"xi-api-key": ELEVENLABS_API_KEY}
+    files = {"file": ("audio.wav", audio_data, "audio/wav")}
+    data = {"model_id": "scribe_v1"}  # <-- valid STT model
+    
+    response = requests.post(url, headers=headers, files=files, data=data)
+    if response.status_code != 200:
+        print(f"❌ ElevenLabs STT Error: {response.status_code} - {response.text}")
+        return ""
+    
+    return response.json().get("text", "")
 
-
+# -----------------------
+# OPENAI RESPONSE
+# -----------------------
 def generate_response(prompt, language):
     lang_names = {"english": "English", "hindi": "Hindi", "portugese": "Portuguese"}
     response = client.chat.completions.create(
@@ -72,7 +82,9 @@ def generate_response(prompt, language):
     )
     return response.choices[0].message.content
 
-
+# -----------------------
+# ELEVENLABS TTS FUNCTION
+# -----------------------
 def text_to_speech(text, language, gender):
     voice_key = f"{gender}_{language[0:2].lower()}"
     voice_id = VOICES.get(voice_key)
@@ -85,7 +97,7 @@ def text_to_speech(text, language, gender):
     headers = {"xi-api-key": ELEVENLABS_API_KEY}
     payload = {
         "text": text,
-        "model_id": "eleven_monolingual_v1",
+        "model_id": "eleven_multilingual_v2",
         "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
     }
     
@@ -103,7 +115,9 @@ def text_to_speech(text, language, gender):
     stream.close()
     p.terminate()
 
-
+# -----------------------
+# MAIN FUNCTION
+# -----------------------
 def main():
     print("🌍 Multi-Language Voice AI\n")
     
@@ -124,6 +138,9 @@ def main():
     if choice == "1":
         audio = record_audio()
         user_input = speech_to_text(audio)
+        if not user_input:
+            print("Failed to transcribe")
+            return
         print(f"📖 Transcribed: {user_input}")
     else:
         user_input = input("Enter text: ")
@@ -135,7 +152,6 @@ def main():
     print(f"🔊 Speaking in {gender} {language}...")
     text_to_speech(ai_response, language, gender)
     print("✓ Done")
-
 
 if __name__ == "__main__":
     main()
