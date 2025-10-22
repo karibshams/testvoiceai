@@ -141,23 +141,32 @@ def text_to_speech(text, gender):
         print(f"Response: {response.text}")
         return
     
+    # Save audio to a file for debugging
+    with open("output_audio.wav", "wb") as audio_file:
+        for chunk in response.iter_content(chunk_size=4096):
+            if chunk:
+                audio_file.write(chunk)
+    
     # Play audio
     p = pyaudio.PyAudio()
-    stream = p.open(
-        format=pyaudio.paInt16,
-        channels=1,
-        rate=22050,
-        output=True
-    )
-    
-    print("🎵 Playing audio...")
-    for chunk in response.iter_content(chunk_size=4096):
-        if chunk:
-            stream.write(chunk)
-    
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
+    try:
+        stream = p.open(
+            format=pyaudio.paInt16,  # Ensure format matches ElevenLabs output
+            channels=1,             # Mono audio
+            rate=22050,             # Match ElevenLabs sample rate
+            output=True
+        )
+        
+        print("🎵 Playing audio...")
+        for chunk in response.iter_content(chunk_size=4096):
+            if chunk:
+                stream.write(chunk)
+    except Exception as e:
+        print(f"❌ Audio playback error: {str(e)}")
+    finally:
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
 
 # -----------------------
 # MAIN FUNCTION
