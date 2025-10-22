@@ -13,8 +13,8 @@ ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 
 # Voice IDs for TTS
 VOICES = {
-    "male_en": "UgBBYS2sOqTuMpoF3BR0",
-    "female_en": "tnSpp4vdxKPjI9w0GnoV",
+    "male_en": "UgBBYS2sOqTuMpoF3BR0", 
+    "female_en": "tnSpp4vdxKPjI9w0GnoV",  
     "male_hi": "UgBBYS2sOqTuMpoF3BR0",
     "female_hi": "tnSpp4vdxKPjI9w0GnoV",
     "male_pt": "UgBBYS2sOqTuMpoF3BR0",
